@@ -2,6 +2,7 @@ using System;
 using Microsoft.AspNetCore.Mvc;
 using MongoExample.Services;
 using MongoExample.Models;
+using System.ComponentModel;
 
 namespace MongoExample.Controllers;
 
@@ -26,6 +27,13 @@ public class PlaylistController : Controller
   [HttpPost]
   public async Task<IActionResult> Post([FromBody] Playlist playlist)
   {
+    foreach (PropertyDescriptor descriptor in TypeDescriptor.GetProperties(playlist))
+    {
+      string name = descriptor.Name;
+      object value = descriptor.GetValue(playlist);
+      Console.WriteLine("{0}={1}", name, value);
+    }
+
     await _mongoDBService.CreateAsync(playlist);
     return CreatedAtAction(nameof(Get), new { id = playlist.Id }, playlist);
   }

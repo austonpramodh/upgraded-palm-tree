@@ -32,29 +32,19 @@ services:
     environment:
       MONGO_INITDB_ROOT_USERNAME: root
       MONGO_INITDB_ROOT_PASSWORD: mongo
+      MONGO_INITDB_DATABASE: bindu_db
     network_mode: service:app
     # Add "forwardPorts": ["27017"] to **devcontainer.json** to forward MongoDB locally.
     # (Adding the "ports" property to this file will not forward from a Codespace.)
   mongo-express:
     image: mongo-express
     network_mode: service:app
-    command:
-      - /bin/sh -c
-      - |
-        wait_tcp_port localhost 27017
-        echo "I am running!!"
-        sleep 100
-        exec node app
     environment:
-      # - ME_CONFIG_MONGODB_URL=mongodb://root:mongo@localhost:27017/
       - ME_CONFIG_MONGODB_SERVER=localhost
-      - ME_CONFIG_MONGODB_PORT=27017
-      # - ME_CONFIG_MONGODB_ENABLE_ADMIN=true
-      # - ME_CONFIG_MONGODB_AUTH_DATABASE=admin
       - ME_CONFIG_MONGODB_AUTH_USERNAME=root
       - ME_CONFIG_MONGODB_AUTH_PASSWORD=mongo
-      - ME_CONFIG_BASICAUTH_USERNAME=root
-      - ME_CONFIG_BASICAUTH_PASSWORD=mongo
+    # TODO: try to use wait_for_tcp on the docker-entry.sh, https://github.com/mongo-express/mongo-express-docker/issues/39
+    restart: unless-stopped
     depends_on:
       - db
       - app
