@@ -1,0 +1,62 @@
+version: '3.8'
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        # Update 'VARIANT' to pick a version of .NET: 3.1, 6.0
+        VARIANT: "6.0"
+        # Optional version of Node.js
+        NODE_VERSION: "lts/*"
+
+    volumes:
+      - ..:/workspace:cached
+
+    # Overrides default command so things don't shut down after the process ends.
+    command: sleep infinity
+    # Runs app on the same network as the database container, allows "forwardPorts" in devcontainer.json function.
+    # network_mode: service:db
+    # Uncomment the next line to use a non-root user for all processes.
+    # user: vscode
+
+    # Use "forwardPorts" in **devcontainer.json** to forward an app port locally. 
+    # (Adding the "ports" property to this file will not forward from a Codespace.)
+
+  db:
+    image: mongo:6.0.2
+    restart: unless-stopped
+    volumes:
+      - mongo-data:/data/db
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: mongo
+    network_mode: service:app
+    # Add "forwardPorts": ["27017"] to **devcontainer.json** to forward MongoDB locally.
+    # (Adding the "ports" property to this file will not forward from a Codespace.)
+  mongo-express:
+    image: mongo-express
+    network_mode: service:app
+    command:
+      - /bin/sh -c
+      - |
+        wait_tcp_port localhost 27017
+        echo "I am running!!"
+        sleep 100
+        exec node app
+    environment:
+      # - ME_CONFIG_MONGODB_URL=mongodb://root:mongo@localhost:27017/
+      - ME_CONFIG_MONGODB_SERVER=localhost
+      - ME_CONFIG_MONGODB_PORT=27017
+      # - ME_CONFIG_MONGODB_ENABLE_ADMIN=true
+      # - ME_CONFIG_MONGODB_AUTH_DATABASE=admin
+      - ME_CONFIG_MONGODB_AUTH_USERNAME=root
+      - ME_CONFIG_MONGODB_AUTH_PASSWORD=mongo
+      - ME_CONFIG_BASICAUTH_USERNAME=root
+      - ME_CONFIG_BASICAUTH_PASSWORD=mongo
+    depends_on:
+      - db
+      - app
+volumes:
+  mongo-data:
